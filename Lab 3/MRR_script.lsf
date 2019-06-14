@@ -1,0 +1,103 @@
+radius = 10e-6;  #Radius of the ring
+x_min = -14.75e-6; #Cladding coordinates 
+x_max = 14.75e-6;  
+wg_wdth = 0.45e-6;  #Input waveguide width
+ring_wdth = 0.45e-6;#Ring waveguide width
+cplr_length = 0;   #Coupler length between MRR and input waveguide
+gap = 0.4e-6;      #Gap
+n = 0.525e-6;      #Random number
+t = 0.225e-6;       # Thickness
+
+select("Input_waveguide");
+set("x",0);
+set("x min",x_min);
+set("x max",x_max);
+set("y",(-gap-n));
+set("y span",wg_wdth);
+set("z",(t/2));
+set("z span",t);
+
+select("Right_waveguide");
+set("x",radius+(cplr_length/2));
+set("x span",wg_wdth);
+set("y",12.75e-6);
+set("y span",6e-6);
+set("z",(t/2));
+set("z span",t);
+
+select("Left_waveguide");
+set("x",(-radius-(cplr_length/2)));
+set("x span",wg_wdth);
+set("y",12.75e-6);
+set("y span",6e-6);
+set("z",(t/2));
+set("z span",t);
+
+select("Right_ring");
+set("x",0+cplr_length/2);
+set("y",radius);
+set("outer radius",radius+(ring_wdth/2));
+set("inner radius",radius-(ring_wdth/2));
+set("z",(t/2));
+set("z span",t);
+
+select("Left_ring");
+set("x",0-cplr_length/2);
+set("y",radius);
+set("outer radius",radius+(ring_wdth/2));
+set("inner radius",radius-(ring_wdth/2));
+set("z",(t/2));
+set("z span",t);
+
+select("simulation_port2");
+set("x",-7.4e-6-cplr_length/2);
+set("y",-gap-n);
+set("y span",3e-6 + wg_wdth);
+set("z",(t/2));
+set("z span",(t+1e-6));
+
+select("ThroughPort");
+set("x",7.1e-6);
+set("y",-gap-n);
+set("y span",2e-6 + wg_wdth);
+set("z",(t/2));
+set("z span",(t+1e-6));
+
+select("DropPort");
+set("x",6.1e-6 + cplr_length/2);
+set("x span",2e-6 + ring_wdth);
+set("y",2.425e-6);
+set("z",(t/2));
+set("z span",(t+1e-6));
+
+select("Coupler");
+set("x",0);
+set("x span",cplr_length);
+set("y",0);
+set("y span",ring_wdth);
+set("z",(t/2));
+set("z span",t);
+
+select("Oxide");
+set("x",0);
+set("x min",x_min);
+set("x max",x_max);
+
+select("Cladding");
+set("x",0);
+set("x min",x_min);
+set("x max",x_max);
+
+select("FDTD");
+set("x",0);
+set("x span",16.2e-6+cplr_length);
+set("y",0);
+set("y span",4.85e-6+2*(wg_wdth+ring_wdth));
+
+select("mesh");
+set("x",0);
+set("x span",5e-6+cplr_length);
+set("y",-gap-n);
+set("y span",n+gap+wg_wdth+ring_wdth);
+
+#run;

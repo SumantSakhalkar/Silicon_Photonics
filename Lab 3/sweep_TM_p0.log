@@ -1,0 +1,22 @@
+FDTD Solutions Version 8.20.1703 (Windows 64bit)
+ expires (month/day/year): 12/16/2018
+using config file: C:/Users/suman/AppData/Roaming/Lumerical/FDTD Solutions.ini
+license host: DESKTOP-7L2UBNR
+current time: Mon Oct 15 14:29:04 2018
+Running on host: DESKTOP-7L2UBNR
+All processes are communicating and ready to proceed to simulation...
+Running fsp file: C:\Program Files\Lumerical\FDTD\bin\fdtd-engine-msmpi.exe -t 1 -remote C:/Users/suman/Downloads/Lab 3/sweep_TM.fsp
+number of processors is 4
+processors are distributed as: 4x1x1
+Running 3D Simulation
+Starting meshing
+Simulation size in gridpoints: 134 x 210 x 34
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0.953125 seconds of CPU time
+84464 84464
+Starting meshing
+Simulation size in gridpoints: 134 x 210 x 34
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0.828125 seconds of CPU time

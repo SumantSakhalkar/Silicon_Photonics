@@ -1,0 +1,11 @@
+# collect data from Drop Port
+Tdrop_dataset = getresult("drop","T");
+Tdrop_MODE = abs(Tdrop_dataset.T);
+lambda_MODE = Tdrop_dataset.lambda;
+
+# collect data from Through Port
+Tthrough_dataset = getresult("through","T");
+Tthrough_MODE = abs(Tthrough_dataset.T);
+lambda_MODE = Tthrough_dataset.lambda;
+
+matlabsave ('TMM_MODE.mat',Tdrop_MODE, Tthrough_MODE, lambda_MODE);

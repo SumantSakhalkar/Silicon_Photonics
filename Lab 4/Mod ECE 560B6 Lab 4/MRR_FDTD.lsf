@@ -1,0 +1,11 @@
+# collect data from port 2(Drop Port)
+Tdrop_dataset = getresult("FDTD::ports::port 2","T");
+Tdrop_3DFDTD = abs(Tdrop_dataset.T);
+lambda_3DFDTD = Tdrop_dataset.lambda;
+
+# collect data from port 3 (Through Port)
+Tthrough_dataset = getresult("FDTD::ports::port 3","T");
+Tthrough_3DFDTD = abs(Tthrough_dataset.T);
+lambda_3DFDTD = Tthrough_dataset.lambda;
+
+matlabsave ('TMM_3DFDTD.mat',Tdrop_3DFDTD, Tthrough_3DFDTD, lambda_3DFDTD);
