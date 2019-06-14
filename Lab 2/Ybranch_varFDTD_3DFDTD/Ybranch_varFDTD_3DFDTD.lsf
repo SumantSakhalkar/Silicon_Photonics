@@ -1,0 +1,445 @@
+# FDTD simulations for a Y-Branch using Lumerical MODE or FDTD Solutions
+# - in MODE Solutions: 2.5D FDTD simulations (faster)
+# - in FDTD Solutions: 3D FDTD simulations (more accurate) 
+# by Lukas Chrostowski, Zhitian Chen (c) 2014-2016
+
+# Import the Y_branch gds, and perform three simulations:
+#  input on port 1
+#  input on port 2
+#  input on port 3
+# in all cases, record the three S-Parameters; plot and save data.
+
+newproject;
+save("Ybranch_FDTD");
+
+# define wafer and waveguide structure
+thick_Si   = 0.22e-6;
+thick_BOX  = 5.0e-6;
+
+# define materials
+material_Clad = "SiO2 (Glass) - Palik";
+material_BOX  = "SiO2 (Glass) - Palik";
+material_Si   = "Si (Silicon) - Palik";
+
+# define design parameters       
+L_ybranch=15e-6;
+Xmin=0;
+Xmax=L_ybranch;
+Ymin=-5e-6;
+Ymax=5e-6;
+Zmin=-thick_BOX/2;
+Zmax=thick_BOX/2;
+
+# define simulation parameters
+if(fileextension(currentfilename) == "lms"){
+ # MODE Solutions
+ mesh_accuracy=4;
+}
+else{
+ # FDTD Solutions
+ mesh_accuracy=2;
+}
+sim_time=10000e-15;
+wavelength_start = 1.5e-6;   
+wavelength_stop = 1.6e-6;  
+wavelength_center = 1.55e-6;
+wavelength_span = 0.1e-6;
+X_span=0.2e-6;
+Y_span=1.5e-6;
+Z_span=1.5e-6;
+frequency_points=1001;
+
+## draw buried oxide
+addrect; set("name", "Oxide_Box"); 
+set("material", material_BOX);
+set("x min", Xmin); set("x max", Xmax);
+set("y min", Ymin); set("y max", Ymax);
+set("z min", Zmin); set("z max", Zmax);
+#set("override mesh order from material database",1);
+#set("mesh order",3);
+#set("alpha", 0.05);
+
+## Import Y_branch gds
+gdsimport("Compact_YBranch_open.gds", "Compact_YBranch_open", 1, material_Si, -thick_Si/2, thick_Si/2);
+
+if(fileextension(currentfilename) == "lms"){
+## MODE Solutions -add 2.5D FDTD propagator
+ addvarfdtd; 
+ set("x min", Xmin);   set("x max", Xmax);
+ set("y min", Ymin);   set("y max", Ymax); 
+ set("z min", Zmin/2); set("z max", Zmax/2); 
+ set ("mesh accuracy",mesh_accuracy);
+ set ("simulation time",2000e-15);
+ set ("x0",-5e-6);
+ set("bandwidth","broadband");
+ set("set simulation bandwidth",1);
+ set("simulation wavelength min",wavelength_start-0.1e-6); 
+ set("simulation wavelength max",wavelength_stop+0.1e-6);
+ 
+ # add input source and monitor at port 1
+ addmodesource;
+ set("name", "in_port1");
+ set("injection axis", "x-axis");
+ set("direction", "forward");
+ set("mode selection", "fundamental mode");
+ set ("wavelength start", wavelength_start);
+ set ("wavelength stop", wavelength_stop);
+ set("x", X_span); 
+ set("y min", -Y_span/2);  set("y max", Y_span/2);
+
+ addpower;
+ set("name", "monitor_port1");
+ set("monitor type","2D X-normal");
+ set("override global monitor settings",1);
+ set("frequency points",frequency_points);
+ set("x", X_span+0.1e-6); 
+ set("y min", -Y_span/2);  set("y max", Y_span/2); 
+ set("z min", -Z_span/2);  set("z max", Z_span/2); 
+
+ # add input source and monitor at port 2
+ addmodesource;
+ set("name", "in_port2");
+ set("injection axis", "x-axis");
+ #set("direction", "forward");
+ set("direction", "backward");
+ set("mode selection", "fundamental mode");
+ set ("wavelength start", wavelength_start);
+ set ("wavelength stop", wavelength_stop);
+ set("x", L_ybranch-0.1e-6); 
+ set("y min", -Y_span/2+2.75e-6);    set("y max", Y_span/2+2.75e-6); 
+
+ addpower;
+ set("name", "monitor_port2");
+ set("monitor type","2D X-normal");
+ set("override global monitor settings",1);
+ set("frequency points",frequency_points);
+ set("x", L_ybranch-0.2e-6); 
+ set("y min", -Y_span/2+2.75e-6);     set("y max", Y_span/2+2.75e-6); 
+ set("z min", -Z_span/2);    set("z max", Z_span/2); 
+
+ # add input source and monitor at port 3
+ addmodesource;
+ set("name", "in_port3");
+ set("injection axis", "x-axis");
+ set("direction", "backward");
+ set("mode selection", "fundamental mode");
+ set ("wavelength start", wavelength_start);
+ set ("wavelength stop", wavelength_stop);
+ set("x", L_ybranch-0.1e-6); 
+ set("y min", -Y_span/2-2.75e-6);     set("y max", Y_span/2-2.75e-6); 
+
+ addpower;
+ set("name", "monitor_port3");
+ set("monitor type","2D X-normal");
+ set("override global monitor settings",1);
+ set("frequency points",frequency_points);
+ set("x", L_ybranch-0.2e-6); 
+ set("y min", -Y_span/2-2.75e-6);     set("y max", Y_span/2-2.75e-6); 
+ set("z min", -Z_span/2);     set("z max", Z_span/2); 
+}
+
+else{
+ ## Lumerical FDTD Solutions - add 3D FDTD propagator
+ addfdtd; 
+ set("x min", Xmin);       
+ set("x max", Xmax);
+ set("y min", Ymin);              
+ set("y max", Ymax); 
+ set("z min", Zmin/2);
+ set("z max", Zmax/2); 
+ set ("mesh accuracy",mesh_accuracy);
+ set ("background index",1);
+ set ("simulation time",sim_time);
+
+ #add input source and monitor at port 1
+ addmode;
+ set("name", "in_port1");
+ set("injection axis", "x-axis");
+ set("direction", "forward");
+ #set("direction", "backward");
+ set("mode selection", "fundamental TE mode");
+ #set("mode selection", "fundamental TM mode");
+ set ("wavelength start", wavelength_start);
+ set ("wavelength stop", wavelength_stop);
+
+ set("x", X_span); 
+ set("y", 0); set("y span", Y_span);              
+ set("z", 0); set("z span", Z_span);
+
+ addpower;
+ set("name", "monitor_port1");
+ set("monitor type","2D X-normal");
+ set("override global monitor settings",1);
+ set("frequency points",frequency_points);
+
+ set("x", X_span+0.1e-6);
+ set("y", 0); set("y span", Y_span);              
+ set("z", 0); set("z span", Z_span);
+ 
+ #add input source and monitor at port 2
+ addmode;
+ set("name", "in_port2");
+ set("injection axis", "x-axis");
+ #set("direction", "forward");
+ set("direction", "backward");
+ set("mode selection", "fundamental TE mode");
+ #set("mode selection", "fundamental TM mode");
+ set ("wavelength start", wavelength_start);
+ set ("wavelength stop", wavelength_stop);
+
+ set("x", L_ybranch-0.1e-6); 
+ set("y", 2.75e-6); set("y span", Y_span);              
+ set("z", 0); set("z span", Z_span); 
+
+ addpower;
+ set("name", "monitor_port2");
+ set("monitor type","2D X-normal");
+ set("override global monitor settings",1);
+ set("frequency points",frequency_points); 
+
+ set("x", L_ybranch-0.2e-6); 
+ set("y", 2.75e-6); set("y span", Y_span);              
+ set("z", 0); set("z span", Z_span);
+
+ #add input source and monitor at port 3
+ addmode;
+ set("name", "in_port3");
+ set("injection axis", "x-axis");
+ #set("direction", "forward");
+ set("direction", "backward");
+ set("mode selection", "fundamental TE mode");
+ #set("mode selection", "fundamental TM mode");
+ set ("wavelength start", wavelength_start);
+ set ("wavelength stop", wavelength_stop); 
+
+ set("x", L_ybranch-0.1e-6); 
+ set("y", -2.75e-6); set("y span", Y_span);              
+ set("z", 0); set("z span", Z_span);
+
+ addpower;
+ set("name", "monitor_port3");
+ set("monitor type","2D X-normal");
+ set("override global monitor settings",1);
+ set("frequency points",frequency_points);
+
+ set("x", L_ybranch-0.2e-6); 
+ set("y", -2.75e-6); set("y span", Y_span);              
+ set("z", 0); set("z span", Z_span);
+}
+
+
+# add mode expansion monitor
+addmodeexpansion;
+if(fileextension(currentfilename) == "fsp"){
+ set('monitor type','2D x-normal');
+ set("z", 0);  set("z span", Z_span);
+ set("mode selection", "fundamental TE mode");
+ set("align to frequency monitor center",1); 
+ #set("mode selection", "fundamental TM mode");
+}
+else{
+ set('monitor type','Linear Y');
+ set("z min", 0); set("z max", 0);  
+}
+
+set("name", "expansion");
+set("x", X_span); 
+set("y", 0);  set("y span", Y_span); 
+setexpansion('Port1exp','monitor_port1');
+setexpansion('Port2exp','monitor_port2');
+setexpansion('Port3exp','monitor_port3');
+set ("wavelength center", wavelength_center);
+set ("wavelength span", wavelength_span);
+set("frequency points",frequency_points);
+set("align to frequency monitor center",1); 
+
+## Run simulations and obtain S-parameters
+format long;
+
+if(fileextension(currentfilename) == "lms"){
+ filename = "sparams_Ybranch_varFDTD.dat";
+ cellname= "compact_Ybranch_varFDTD";
+}
+else{
+ filename = "sparams_Ybranch_3DFDTD.dat";
+ cellname= "compact_Ybranch_3DFDTD";
+}
+
+if (fileexists(filename))
+{
+ rm(filename);
+}
+
+# Input port 1
+
+switchtolayout;
+
+select("in_port3"); set("enabled",0);
+select("in_port2"); set("enabled",0);
+select("in_port1"); set("enabled",1);
+
+cellname1=cellname+'_port1';
+save(cellname1);
+
+run;
+
+Port1 = getresult("expansion", "expansion for Port1exp");
+Port2 = getresult("expansion", "expansion for Port2exp");
+Port3 = getresult("expansion", "expansion for Port3exp");
+
+f = Port1.f;
+S11=Port1.b/Port1.a;
+S21=Port2.a/Port1.a;
+S31=Port3.a/Port1.a;
+
+abs_S11=abs(S11);
+abs_S21=abs(S21);
+abs_S31=abs(S31);
+
+angle_S11=unwrap(angle(S11));
+angle_S21=unwrap(angle(S21));
+angle_S31=unwrap(angle(S31));
+
+S11_data=[f,abs_S11,angle_S11];
+write(filename,"('port 1','TE',1,'port 1',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S11_data)
+       );
+S21_data=[f,abs_S21,angle_S21];
+write(filename,"('port 2','TE',1,'port 1',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S21_data)
+       );
+S31_data=[f,abs_S31,angle_S31];
+write(filename,"('port 3','TE',1,'port 1',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S31_data)
+       );
+
+plot (c/f*1e6, abs_S11^2, abs_S21^2, abs_S31^2, 'Wavelength (um)', 'Transmission', cellname1);
+legend ('S11 (ReturnLoss)','S21 (Through)', 'S31 (Cross through)');
+plot (c/f*1e6, 10*log10(abs_S11^2), 10*log10(abs_S21^2), 10*log10(abs_S31^2), 'Wavelength (um)', 'Transmission (dB)', cellname1);
+legend ('S11 (ReturnLoss)','S21 (Through)', 'S31 (Cross through)');
+
+
+# Input port 2
+
+switchtolayout;
+
+select("in_port3"); set("enabled",0);
+select("in_port2"); set("enabled",1);
+select("in_port1"); set("enabled",0);
+
+cellname2=cellname+'_port2';
+save(cellname2);
+
+run;
+
+Port1=getresult("expansion","expansion for Port1exp");
+Port2=getresult("expansion","expansion for Port2exp");
+Port3=getresult("expansion","expansion for Port3exp");
+
+f=Port2.f;
+
+S12=Port1.b/Port2.b;
+S22=Port2.a/Port2.b;
+S32=Port3.a/Port2.b;
+
+abs_S12=abs(S12);
+abs_S22=abs(S22);
+abs_S32=abs(S32);
+
+angle_S12=unwrap(angle(S12));
+angle_S22=unwrap(angle(S22));
+angle_S32=unwrap(angle(S32));
+
+S12_data=[f,abs_S12,angle_S12];
+write(filename,"('port 1','TE',1,'port 2',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S12_data)
+       );
+S22_data=[f,abs_S22,angle_S22];
+write(filename,"('port 2','TE',1,'port 2',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S22_data)
+       );
+S32_data=[f,abs_S32,angle_S32];
+write(filename,"('port 3','TE',1,'port 2',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S32_data)
+       );
+
+plot (c/f*1e6, abs_S12^2, abs_S22^2, abs_S32^2, 'Wavelength (um)', 'transmission', cellname2);
+legend ('S12 (Through)','S22 (ReturnLoss)', 'S32 (Cross reflection)');
+plot (c/f*1e6, 10*log10(abs_S12^2), 10*log10(abs_S22^2), 10*log10(abs_S32^2), 'Wavelength (um)', 'transmission (dB)', cellname2);
+legend ('S12 (Through)','S22 (ReturnLoss)', 'S32 (Cross reflection)');
+
+# Input port 3
+
+switchtolayout;
+
+select("in_port3"); set("enabled",1);
+select("in_port2"); set("enabled",0);
+select("in_port1"); set("enabled",0);
+
+cellname3=cellname+'_port3';
+save(cellname3);
+
+run;
+
+Port1=getresult("expansion","expansion for Port1exp");
+Port2=getresult("expansion","expansion for Port2exp");
+Port3=getresult("expansion","expansion for Port3exp");
+
+f=Port3.f;
+
+S13=Port1.b/Port3.b;
+S23=Port2.a/Port3.b;
+S33=Port3.a/Port3.b;
+
+abs_S13=abs(S13);
+abs_S23=abs(S23);
+abs_S33=abs(S33);
+
+angle_S13=unwrap(angle(S13));
+angle_S23=unwrap(angle(S23));
+angle_S33=unwrap(angle(S33));
+
+S13_data=[f,abs_S13,angle_S13];
+write(filename,"('port 1','TE',1,'port 3',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S13_data)
+       );
+S23_data=[f,abs_S23,angle_S23];
+write(filename,"('port 2','TE',1,'port 3',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S23_data)
+       );
+S33_data=[f,abs_S33,angle_S33];
+write(filename,"('port 3','TE',1,'port 3',1,'transmission')"
+       +endl+"("
+       +num2str(length(f))
+       +",3)"
+       +endl+num2str(S33_data)
+       );
+
+plot (c/f*1e6, abs_S13^2, abs_S23^2, abs_S33^2, 'Wavelength (um)', 'Transmission', cellname3);
+legend ('S13 (Through)','S23 (Cross reflection)', 'S33 (ReturnLoss)');
+plot (c/f*1e6, 10*log10(abs_S13^2), 10*log10(abs_S23^2), 10*log10(abs_S33^2), 'Wavelength (um)', 'Transmission (dB)', cellname3);
+legend ('S13 (Through)','S23 (Cross reflection)', 'S33 (ReturnLoss)');
